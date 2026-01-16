@@ -1,26 +1,24 @@
-🌸 Anime Scene Recognition AI BackendA lightweight, serverless-ready backend service that identifies anime scenes from images or descriptions. By leveraging Google Gemini Pro Vision, it provides metadata including summaries, episode counts, and ratings.✨ FeaturesScene Recognition: Identify anime titles from screenshots or text descriptions.Rich Metadata: Returns AniList IDs, episode counts, summaries, and reviews.Edge-Ready: Built with Hono for ultra-fast deployment on Cloudflare Workers.CORS Enabled: Ready for immediate integration with your React/Vue/Next.js frontend.🛠️ Tech StackComponentTechnologyRuntimeNode.js / Bun / Cloudflare WorkersFrameworkHonoAI ModelGoogle Gemini AILanguageTypeScriptAPI ReferenceAniList API (Integrated)🚀 Getting StartedPrerequisitesNode.js installedA Gemini API KeyInstallationClone the repository:Bashgit clone https://github.com/yourusername/anime-scene-ai.git
-cd anime-scene-ai
-Install dependencies:Bashnpm install
-Configure environment variables (.env):Code snippetGEMINI_API_KEY=your_key_here
-Start development server:Bashnpm run dev
-📡 API Endpoints1. POST /generateGenerates a raw AI-powered analysis of a scene description or image URL.Request Body:JSON{
-  "prompt": "Description of the scene or Image URL"
+
+🌸 Anime Scene AI BackendLightning-fast anime recognition powered by Gemini AI and Hono. Identify scenes, fetch metadata, and generate AI reviews in milliseconds.⚡ Quick FeaturesPrecision Recognition – Powered by Google Gemini Pro Vision.Rich Metadata – Direct integration with AniList IDs & episode data.Edge-Native – Designed for Cloudflare Workers & Bun.Developer First – Fully typed in TypeScript with CORS enabled.🛠️ Tech StackLayerTechnologyRuntimeNode.js / Bun / Cloudflare WorkersFrameworkHono (Ultra-lightweight)AI EngineGoogle Gemini 1.5MetadataAniList GraphQL API📡 API EndpointsPOST /identify-animeThe primary engine for structured scene data.Request:JSON{
+  "image": "base64_or_image_url"
 }
-2. POST /identify-animeThe primary endpoint for structured data.Request Body:JSON{
-  "image": "base64_string_or_url"
-}
-Response Preview:JSON{
+Response:JSON{
   "success": true,
   "id": 12345,
   "result": {
-    "title": "Anime Name",
-    "summary": "A brief overview...",
+    "title": "Anime Title",
+    "summary": "Scene context and summary...",
     "episodes": 24,
-    "review": "Short AI-generated review"
+    "review": "AI-generated scene critique."
   },
   "media": {
-    "coverImage": "...",
-    "recommendations": [...]
+    "coverImage": "url",
+    "recommendations": ["Anime A", "Anime B"]
   }
 }
-📄 LicenseThis project is licensed under the MIT License - see the LICENSE file for details.
+POST /generateFlexible prompt-based AI analysis.Request:JSON{ "prompt": "Describe the animation style in this image: [URL]" }
+🚀 Setup1. Clone & InstallBashgit clone https://github.com/yourusername/anime-scene-ai.git
+cd anime-scene-ai && npm install
+2. EnvironmentBashecho "GEMINI_API_KEY=your_key_here" > .env
+3. LaunchBashnpm run dev
+📄 LicenseMIT License — Simple and open.
