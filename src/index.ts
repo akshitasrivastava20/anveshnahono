@@ -10,6 +10,7 @@ import { streamText } from 'hono/streaming'
 /* -------------------- Types -------------------- */
 type Env = {
   GEMINI_API_KEY: string
+  CHAT_HISTORY: KVNamespace
 }
 
 /* -------------------- App -------------------- */
@@ -47,41 +48,63 @@ function extractGeminiJSON(response: any) {
 
 /** TEXT GENERATION */
 app.post('/generate', async (c) => {
-  const { prompt,history = [] } = await c.req.json()
+  const { prompt, sessionId } = await c.req.json();
+  const kvKey = `history:${sessionId}`;
 
-  const ai = new GoogleGenAI({
-    apiKey: c.env.GEMINI_API_KEY,
-  })
+  if (!sessionId) return c.json({ error: "sessionId is required" }, 400);
+
+
+  // const ai = new GoogleGenAI({
+  //   apiKey: c.env.GEMINI_API_KEY,
+  // })
 
  return streamText(c, async (stream) => {
     // In @google/genai, generateContentStream is called directly on models
-
-    const contents = [
+   const raw = await c.env.CHAT_HISTORY.get(kvKey);
+      let history = raw? JSON.parse(raw) : [];
+   
+   
+      const currentContents = [
         ...history,
         { role: 'user', parts: [{ text: prompt }] }
       ];
+      const ai = new GoogleGenAI({
+        apiKey: c.env.GEMINI_API_KEY,
+       })
+
     const response = await ai.models.generateContentStream({
       model: "gemini-2.5-flash", // or "gemini-3-flash-preview"
-      contents: prompt,
+      contents: currentContents,
       config: {
-        systemInstruction: " Your name is Pippo.",
+        systemInstruction: " Your are Pippo.",
       },
     });
 
     let fullResponseText="";
 
-    // 3. Iterate over the response directly
-    // The new SDK response is an AsyncIterable itself
+    
     for await (const chunk of response) {
       // Use chunk.text to get the string content
-      const text = chunk.text;
-      if (text) {
-        fullResponseText+=text;
-        await stream.write(text);
+      
+      if (chunk.text) {
+        fullResponseText+=chunk.text;
+        await stream.write(chunk.text);
       }
     }
+
+
+    const updatedHistory = [
+        ...currentContents,
+        { role: 'model', parts: [{ text: fullResponseText }] }
+      ].slice(-10); // Keep last 10 messages so the prompt doesn't get too big
+
+      // Use c.executionCtx.waitUntil to ensure the save finishes
+      c.executionCtx.waitUntil(
+        c.env.CHAT_HISTORY.put(kvKey, JSON.stringify(updatedHistory), { expirationTtl: 86400 })
+      );
+   
   });
-})
+});
 
 
 
