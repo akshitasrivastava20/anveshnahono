@@ -47,7 +47,7 @@ function extractGeminiJSON(response: any) {
 
 /** TEXT GENERATION */
 app.post('/generate', async (c) => {
-  const { prompt } = await c.req.json()
+  const { prompt,history = [] } = await c.req.json()
 
   const ai = new GoogleGenAI({
     apiKey: c.env.GEMINI_API_KEY,
@@ -55,6 +55,11 @@ app.post('/generate', async (c) => {
 
  return streamText(c, async (stream) => {
     // In @google/genai, generateContentStream is called directly on models
+
+    const contents = [
+        ...history,
+        { role: 'user', parts: [{ text: prompt }] }
+      ];
     const response = await ai.models.generateContentStream({
       model: "gemini-2.5-flash", // or "gemini-3-flash-preview"
       contents: prompt,
@@ -63,12 +68,15 @@ app.post('/generate', async (c) => {
       },
     });
 
+    let fullResponseText="";
+
     // 3. Iterate over the response directly
     // The new SDK response is an AsyncIterable itself
     for await (const chunk of response) {
       // Use chunk.text to get the string content
       const text = chunk.text;
       if (text) {
+        fullResponseText+=text;
         await stream.write(text);
       }
     }
