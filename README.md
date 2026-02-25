@@ -42,12 +42,13 @@ Make sure to set the following environment variable in your Cloudflare Worker:
 
 **Endpoint:** `POST /generate`
 
-Generates text content using Google Gemini AI.
+Generates text content using Google Gemini AI.Gives streaming responses with 24 hour persisting memory.
 
 **Request Body:**
 ```json
 {
-  "prompt": "Your text prompt here"
+  "prompt": "Your text prompt here",
+  "sessionId":"eg-user-test-123"
 }
 ```
 
