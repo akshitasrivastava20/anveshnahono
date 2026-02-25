@@ -5,6 +5,7 @@ import {
   createUserContent,
   createPartFromUri,
 } from '@google/genai'
+import { streamText } from 'hono/streaming'
 
 /* -------------------- Types -------------------- */
 type Env = {
@@ -52,14 +53,33 @@ app.post('/generate', async (c) => {
     apiKey: c.env.GEMINI_API_KEY,
   })
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-  })
+ return streamText(c, async (stream) => {
+    // In @google/genai, generateContentStream is called directly on models
+    const response = await ai.models.generateContentStream({
+      model: "gemini-2.5-flash", // or "gemini-3-flash-preview"
+      contents: prompt,
+      config: {
+        systemInstruction: " Your name is Pippo.",
+      },
+    });
 
-  const text =response.text;
-  return c.json({ response: text })
+    // 3. Iterate over the response directly
+    // The new SDK response is an AsyncIterable itself
+    for await (const chunk of response) {
+      // Use chunk.text to get the string content
+      const text = chunk.text;
+      if (text) {
+        await stream.write(text);
+      }
+    }
+  });
 })
+
+
+
+
+
+
 
 
 /** IMAGE → ANIME IDENTIFICATION */
