@@ -114,92 +114,7 @@ app.post('/generate', async (c) => {
 
 
 /** IMAGE → ANIME IDENTIFICATION */
-// app.post('/identify-anime', async (c) => {
-//   try {
-//     const formData = await c.req.formData()
-//     const file = formData.get('image') as File | null
 
-//     if (!file) {
-//       return c.json({ error: 'No image uploaded' }, 400)
-//     }
-
-//     const ai = new GoogleGenAI({
-//       apiKey: c.env.GEMINI_API_KEY,
-//     })
-
-//     /* Upload image to Gemini (File is already a Blob) */
-//     const uploadedFile = await ai.files.upload({
-//       file,
-//       config: { mimeType: file.type },
-//     })
-
-//     if (!uploadedFile.uri || !uploadedFile.mimeType) {
-//       throw new Error('Gemini file upload failed')
-//     }
-
-//     const response = await ai.models.generateContent({
-//       model: 'gemini-3-flash-preview',
-//       contents: createUserContent([
-//         createPartFromUri(
-//           uploadedFile.uri,
-//           uploadedFile.mimeType
-//         ),
-//         `
-// You are an anime expert assistant for an anime streaming platform.
-
-// Analyze the uploaded image and do the following:
-
-// 1. Identify the anime shown in the image.
-// 2. If you are not confident, clearly say "Unknown anime".
-
-// Return strictly valid JSON with keys:
-// anilist_id,
-// anime, overview, episodes, genres, review, confidence
-
-// If identified, suggest 2 similar anime titles.
-// `,
-//       ]),
-//     })
-
-//     const data = extractGeminiJSON(response)
-    
-
-//     /* AniList fetch */
-//     interface AniListSearchResponse {
-//       results?: { id: number }[]
-//     }
-
-// const id = data.anilist_id;
-
-// if (!id) {
-//   return c.json({ success: false, error: 'Anime not found' }, 404)
-// }
-
-// const mediaRes = await fetch(
-//   `http://anveshna-backend-v2.vercel.app/meta/anilist/data/${id}?provider=gogoanime`
-// )
-
-// if (!mediaRes.ok) {
-//   return c.json({ success: false, error: 'Media not found for provider' }, 404)
-// }
-
-// const media = await mediaRes.json()
-
-
-//     return c.json({
-//       success: true,
-//       id:id,
-//       result: data,
-//       media,
-//     })
-//   } catch (error) {
-//     console.error(error)
-//     return c.json(
-//       { error: 'Anime identification failed' },
-//       500
-//     )
-//   }
-// })
 app.post('/identify-anime', async (c) => {
   console.log("ALL HEADERS:", Object.fromEntries(c.req.raw.headers));
   try {
@@ -277,5 +192,49 @@ anilist_id, anime, overview, episodes, genres, review, confidence
   }
 })
 
+
+app.post('/recommendation',async(c)=>{
+  const {prompt}=await c.req.json();
+  const ai = new GoogleGenAI({
+    apiKey: c.env.GEMINI_API_KEY,
+  })
+
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash", // Flash is faster/cheaper for simple ID lookups
+    config:{
+    systemInstruction: "You are a database. Return ONLY the integer AniList ID for the anime mentioned. No text, no markdown."
+  },
+    contents: prompt,
+  });
+
+  const rawText = response.text || '';
+  const id = rawText.replace(/[^0-9]/g, '');
+ if (!id) {
+      return c.json({ success: false, error: 'Anime not found' }, 404)
+    }
+
+    const mediaRes = await fetch(
+      `https://anveshna-backend-v2.vercel.app/meta/anilist/data/${id}?provider=gogoanime`
+    )
+
+    if (!mediaRes.ok) {
+      return c.json({ success: false, error: 'Media not found' }, 404)
+    }
+
+    const media = await mediaRes.json() as any ;
+   
+     
+     return c.json({
+      success: true,
+      id:id,
+      recommendation:media.recommendations || []
+    })
+
+
+
+
+
+})
 
 export default app

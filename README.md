@@ -117,6 +117,48 @@ curl -X POST https://your-worker-domain.workers.dev/identify-anime \
   -F "image=@your-anime-image.jpg"
 ```
 
+### 3. Anime Recommendations
+
+**Endpoint:** `POST /recommendation`
+
+Provides anime recommendations based on a given anime name using AI analysis.
+
+**Request Body:**
+```json
+{
+  "prompt": "Your favorite anime name"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  
+  "recommendations": "AI-generated recommendations with detailed explanations and similar anime suggestions"
+}
+```
+
+**Error Responses:**
+```json
+{
+  "error": "Missing anime name"
+}
+```
+
+```json
+{
+  "error": "Failed to generate recommendations"
+}
+```
+
+**Example:**
+```bash
+curl -X POST https://your-worker-domain.workers.dev/recommendation \
+  -H "Content-Type: application/json" \
+  -d '{"animeName": "Attack on Titan"}'
+```
+
 ## 🔧 Technical Details
 
 ### Framework & Dependencies
@@ -161,6 +203,14 @@ const response = await fetch('/identify-anime', {
   body: formData
 });
 const result = await response.json();
+
+// Anime recommendations
+const response = await fetch('/recommendation', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ animeName: 'Your Favorite Anime' })
+});
+const recommendations = await response.json();
 ```
 
 ## 🚨 Error Handling
